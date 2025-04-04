@@ -158,97 +158,17 @@ class NetWrapper(nn.Module):
 # BYOL 模型
 # ---------------------
 class BYOL(nn.Module):
-    def __init__(
-        self,
-        net,
-        image_size,
-        hidden_layer=-2,
-        projection_size=16,
-        projection_hidden_size=64,
-        augment_fn=None,
-        augment_fn2=None,
-        moving_average_decay=0.99,
-        use_momentum=True
-    ):
+    def __init__(self, net, hidden_layer=-2, projection_size=3, projection_hidden_size=64):
         super().__init__()
-        self.net = net
-
-        # 默认数据增强（利用 torchvision.transforms）
-        DEFAULT_AUG1 = T.Compose([
-            T.RandomHorizontalFlip(p=0.2),
-            T.Normalize(
-                mean=torch.tensor([0.485, 0.456, 0.406]),
-                std=torch.tensor([0.229, 0.224, 0.225])
-            ),
-        ])
-        DEFAULT_AUG2 = T.Compose([
-            T.RandomVerticalFlip(p=0.2),
-            T.Normalize(
-                mean=torch.tensor([0.485, 0.456, 0.406]),
-                std=torch.tensor([0.229, 0.224, 0.225])
-            ),
-        ])
-        self.augment1 = default(augment_fn, DEFAULT_AUG1)
-        self.augment2 = default(augment_fn2, DEFAULT_AUG2)
-
-        # 在线编码器：包装基础网络并截取隐藏层输出
+        # 使用传入的 net（假设它已经是一个 MLP），包装为在线编码器
         self.online_encoder = NetWrapper(net, projection_size, projection_hidden_size, layer=hidden_layer)
 
-        self.use_momentum = use_momentum
-        self.target_encoder = None
-        self.target_ema_updater = EMA(moving_average_decay)
-
-        # 在线预测器：通过 MLP 对在线编码器的投影进行预测
-        self.online_predictor = MLP(projection_size, projection_size, projection_hidden_size)
-
-        # 将模型移动到基础网络所在的设备上
-        device = get_module_device(net)
-        self.to(device)
-        # 通过传入虚拟数据初始化相关参数
-        self.forward(torch.randn(4, 3, image_size, image_size, device=device))
-
-    @singleton('target_encoder')
-    def _get_target_encoder(self):
-        target_encoder = copy.deepcopy(self.online_encoder)
-        set_requires_grad(target_encoder, False)
-        return target_encoder
-
-    def reset_moving_average(self):
-        del self.target_encoder
-        self.target_encoder = None
-
-    def update_moving_average(self):
-        assert self.use_momentum, '已关闭目标编码器的动量更新'
-        assert self.target_encoder is not None, '目标编码器尚未创建'
-        update_moving_average(self.target_ema_updater, self.target_encoder, self.online_encoder)
-
-    def forward(self, x, return_embedding=False, return_projection=True):
-        # 训练时 batch 大小不能为 1（因 BatchNorm 限制）
-        assert not (self.training and x.shape[0] == 1), '训练时 batch 大小必须大于1'
-        if return_embedding:
-            return self.online_encoder(x, return_projection=return_projection)
-
-        # 对输入进行两种不同的数据增强，生成两视图
-        image_one, image_two = self.augment1(x), self.augment2(x)
-
-        online_proj_one, _ = self.online_encoder(image_one)
-        online_proj_two, _ = self.online_encoder(image_two)
-
-        online_pred_one = self.online_predictor(online_proj_one)
-        online_pred_two = self.online_predictor(online_proj_two)
-
-        with torch.no_grad():
-            target_encoder = self._get_target_encoder() if self.use_momentum else self.online_encoder
-            target_proj_one, _ = target_encoder(image_one)
-            target_proj_two, _ = target_encoder(image_two)
-            target_proj_one.detach_()
-            target_proj_two.detach_()
-
-        # 计算 BYOL 损失（对称结构）
-        loss_one = loss_fn(online_pred_one, target_proj_two.detach())
-        loss_two = loss_fn(online_pred_two, target_proj_one.detach())
-        loss = loss_one + loss_two
-        return loss.mean()
+    def forward(self, x, return_projection=True):
+        """
+        简化的前向计算：直接返回在线编码器的投影和表示。
+        """
+        projection, representation = self.online_encoder(x, return_projection=return_projection)
+        return projection, representation
 
 # ---------------------
 # 示例：模型实例化
@@ -264,6 +184,5 @@ if __name__ == '__main__':
         nn.Linear(64, 128)
     )
 
-    image_size = 224
-    model = BYOL(net=base_net, image_size=image_size)
+    model = BYOL(net=base_net)
     print(model)
