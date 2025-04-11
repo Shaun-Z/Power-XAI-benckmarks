@@ -17,7 +17,7 @@ class MixedImgDataset(Dataset):
         for label in self.classes:
             class_path = os.path.join(root_dir, label)
             if os.path.isdir(class_path):
-                image_files = glob.glob(os.path.join(class_path, '*.jpg'))
+                image_files = glob.glob(os.path.join(class_path, '*.jpg')) + glob.glob(os.path.join(class_path, '*.png'))
                 for img_path in image_files:
                     self.image_paths.append(img_path)
                     self.labels.append(self.class_to_idx[label])
