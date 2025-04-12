@@ -63,9 +63,9 @@ model = ADTFM_AT_Model_Image(
 ).to(device)
 
 # 超参数设置
-epochs = 20
+epochs = 5
 batch_size = 4
-learning_rate = 1e-4
+learning_rate = 1e-5
 
 # 定义优化器
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -108,7 +108,7 @@ for epoch in range(epochs):
                   f'Loss: {loss.item():.4f}, Accuracy: {100 * correct / total:.2f}%')
     
     # Validation
-    if (epoch + 1) % 5 == 0:
+    if (epoch + 1) % 1 == 0:
         model.eval()
         val_loss = 0.0
         val_correct = 0

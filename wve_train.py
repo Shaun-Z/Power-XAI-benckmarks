@@ -57,7 +57,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = WaveformVectorEmbedding(vocab_size=3).to(device)
 
 # 超参数设置
-epochs = 20
+epochs = 2
 batch_size = 4
 learning_rate = 1e-4
 
@@ -102,14 +102,14 @@ for epoch in range(epochs):
                   f'Loss: {loss.item():.4f}, Accuracy: {100 * correct / total:.2f}%')
     
     # Validation
-    if (epoch + 1) % 5 == 0:
+    if (epoch + 1) % 1 == 0:
         model.eval()
         val_loss = 0.0
         val_correct = 0
         val_total = 0
         
         with torch.no_grad():
-            for images, labels in test_dataloader:
+            for images, labels in train_dataloader:
                 images = images.to(device)
                 labels = labels.to(device)
                 outputs = model(images)
@@ -120,7 +120,7 @@ for epoch in range(epochs):
                 val_total += labels.size(0)
                 val_correct += (predicted == labels).sum().item()
         
-        print(f'Validation - Epoch [{epoch+1}/{epochs}], Loss: {val_loss/len(test_dataloader):.4f}, '
+        print(f'Validation - Epoch [{epoch+1}/{epochs}], Loss: {val_loss/len(train_dataloader):.4f}, '
               f'Accuracy: {100 * val_correct / val_total:.2f}%')
 
 torch.save(model.state_dict(), f'wve_model.pth')
