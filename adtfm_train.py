@@ -58,14 +58,14 @@ model = ADTFM_AT_Model_Image(
     in_channels=3,
     cnn_out_channels=128,
     hidden_size=256,
-    num_layers=2,
+    num_layers=3,
     num_classes=3
 ).to(device)
 
 # 超参数设置
 epochs = 5
 batch_size = 4
-learning_rate = 1e-5
+learning_rate = 1e-4
 
 # 定义优化器
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)

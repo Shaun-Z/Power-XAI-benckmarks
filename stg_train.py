@@ -54,10 +54,10 @@ from torch import nn
 # 设置设备，优先使用 GPU（如果可用）
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = SingleTemporalGraphClassifier(in_channels=3, hidden_channels=32, embedding_dim=64, num_classes=3, num_layers=2).to(device)
+model = SingleTemporalGraphClassifier(in_channels=3, hidden_channels=32, embedding_dim=64, num_classes=3, num_layers=4).to(device)
 
 # 超参数设置
-epochs = 100
+epochs = 200
 batch_size = 4
 learning_rate = 1e-4
 
