@@ -134,6 +134,6 @@ for epoch in range(epochs):
         print(f'Validation - Epoch [{epoch+1}/{epochs}], Loss: {val_loss/len(test_dataloader):.4f}, '
               f'Accuracy: {100 * val_correct / val_total:.2f}%')
 
-torch.save(model.state_dict(), f'adt_model.pth')
+torch.save(model.state_dict(), f'msnn_model.pth')
 
 print('Training completed.')
